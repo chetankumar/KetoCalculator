@@ -1,0 +1,100 @@
+import torch
+from torch.autograd import Variable
+import torch.optim as optim
+from data_reader import DataReader
+import numpy as np
+from os import system, name 
+
+##### We have 2 meal options, with the following distribution 
+##### of Protein, Fat and Carbs
+
+# Option   P       F       C
+#-------------------------------
+# m1       1       1       1
+# m2       1       0       1
+
+##### Target is what the total amounts of Protein, Fat and Carbs should be
+
+#            P       F       C
+#----------------------------
+# target     2       1       2
+
+##### We need to optimize the amounts for m1 and m2 such that target is met.
+# amounts = m1 ==> a grams,  m2 ==> b grams
+# Now whatever the amount of m1 is, say a, all the 3 macros will be multiplied by that.
+# So the target calculation becomes:
+# tP = a x m1P + b x m2P
+# tF = a x m1F + b x m2F
+# tC = a x m1C + b x m2C
+
+# Loss function is a sum of squared loss
+
+
+
+data_reader = DataReader()
+nutritional_values = data_reader.LoadData()
+
+device = "cpu"
+
+food_matrix = nutritional_values[["Carbs","Protein","Fat"]].values
+food_matrix =  food_matrix/100
+food_matrix = Variable(torch.Tensor(food_matrix),requires_grad=False).to(device)
+
+y_target = [28.34,170.05,163.75]
+y_target = Variable(torch.Tensor(y_target),requires_grad=False).to(device)
+
+min_max_constraints = nutritional_values[["Min","Max"]]
+
+amounts = Variable(torch.randn(food_matrix.size()[0]),requires_grad=True).to(device)
+
+optimizer = optim.SGD([amounts], lr=0.1)
+
+loss = 0
+for t in range(100000):
+    
+    # Forward pass: compute predicted y using operations on Variables; these
+    # are exactly the same operations we used to compute the forward pass using
+    # Tensors, but we do not need to keep references to intermediate values since
+    # we are not implementing the backward pass by hand.
+    y = torch.matmul(food_matrix.t(),amounts)
+
+    # Compute and print loss using operations on Variables.
+    # Now loss is a Variable of shape (1,) and loss.data is a Tensor of shape
+    # (1,); loss.data[0] is a scalar value holding the loss.
+    prev_loss = loss
+    loss = (y - y_target).pow(2).sum()
+    change_in_loss = abs(loss - prev_loss) / prev_loss
+    if change_in_loss < 0.0001:
+        break;
+    
+
+    # Use autograd to compute the backward pass. This call will compute the
+    # gradient of loss with respect to all Variables with requires_grad=True.
+    # After this call w1.grad and w2.grad will be Variables holding the gradient
+    # of the loss with respect to w1 and w2 respectively.
+    loss.backward()
+
+    # Update weights using gradient descent; w1.data and w2.data are Tensors,
+    # w1.grad and w2.grad are Variables and w1.grad.data and w2.grad.data are
+    # Tensors.
+    #amounts.data -= learning_rate * amounts.grad.data
+    optimizer.step()
+    for i,d in enumerate(amounts.data):
+        constraint = min_max_constraints.iloc[i]
+        d.clamp_(constraint["Min"],constraint["Max"])
+
+    # Manually zero the gradients after updating weights
+    amounts.grad.data.zero_()
+    if t % 1000 == 0:
+        system('cls')
+        print(t, loss.data)
+        list = amounts.tolist()
+        nutritional_values =  data_reader.AddColumn('Recommended',list)
+        print(nutritional_values)
+
+
+print(y)
+list = amounts.tolist()
+nutritional_values =  data_reader.AddColumn('Recommended',list)
+print(nutritional_values)
+data_reader.SaveData()
