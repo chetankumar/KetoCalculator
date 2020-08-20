@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>d663dbff-c058-4278-9d4f-d94715735081</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>KetoCalculator.py</StartupFile>
+    <StartupFile>RecipeCalculator.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -25,13 +25,21 @@
     <Compile Include="data_reader.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="KetoCalculator.py" />
+    <Compile Include="Archive_KetoCalculator_V1.txt" />
+    <Compile Include="KetoCalculator.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="RecipeCalculator.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="CondaEnv|CondaEnv|vscode_default" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="food_nutritional_values.csv" />
+    <Content Include="README.md" />
+    <Content Include="recipies.csv" />
     <Content Include="recommended.csv" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
